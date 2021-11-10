@@ -35,7 +35,7 @@ namespace DBarSimulator
 
         public void RandomlyClose()
         {
-            if (random.Next(0, 10000) == 4200)
+            if (random.Next(0, 1000) == 420)
             {
                 CloseBar();
             }
@@ -61,6 +61,7 @@ namespace DBarSimulator
 
         public bool Enter(Student student)
         {
+            RandomlyClose();
             if (IsClosed)
             {
                 return false;
@@ -70,6 +71,10 @@ namespace DBarSimulator
                 return false;
             }
             semaphore.WaitOne();
+            if (IsClosed)
+            {
+                return false;
+            }
             if (student.Age < 18)
             {
                 return false;
@@ -98,10 +103,16 @@ namespace DBarSimulator
             IsClosed = true;
             lock (students)
             {
+                var studentsToRemove = new List<Student>();
                 foreach (var student in students)
                 {
-                    students.Remove(student);
+                    studentsToRemove.Add(student);
                     student.OnLeaveBar();
+                    semaphore.Release();
+                }
+                foreach (var student in studentsToRemove)
+                {
+                    students.Remove(student);
                 }
             }
         }
